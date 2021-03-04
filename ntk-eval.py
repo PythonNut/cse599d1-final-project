@@ -12,10 +12,7 @@ from jax.experimental import stax
 from jax.experimental.stax import logsoftmax
 import matplotlib.pyplot as plt     
 
-from absl import app, flags
 import itertools
-import torchvision
-import torch
 import time
 import datasets
 from cleverhans.jax.attacks.fast_gradient_method import fast_gradient_method

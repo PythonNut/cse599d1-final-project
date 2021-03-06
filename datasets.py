@@ -114,11 +114,13 @@ def get_dataset(
     return train_images, train_labels, test_images, test_labels
 
 
-def minibatch(x_train, y_train, batch_size, train_epochs):
+def minibatch(x_train, y_train, batch_size, train_epochs, key=None):
     """Generate minibatches of data for a set number of epochs."""
     epoch = 0
     start = 0
-    key = random.PRNGKey(0)
+
+    if key is None:
+        key = random.PRNGKey(0)
 
     while epoch < train_epochs:
         end = start + batch_size

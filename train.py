@@ -118,11 +118,12 @@ def main():
     x_train, y_train, x_test, y_test = datasets.get_dataset("fashion_mnist", 25600, 128)
 
     for e in range(EPOCHS):
+        key, subkey = random.split(key)
         train_loader = datasets.minibatch(
-            x_train, y_train, batch_size=128, train_epochs=1
+            x_train, y_train, batch_size=128, train_epochs=1, key=subkey
         )
         val_loader = datasets.minibatch(
-            x_test, y_test, batch_size=128, train_epochs=1
+            x_test, y_test, batch_size=128, train_epochs=1, key=subkey
         )
 
         params, optimizer, _, _ = train(

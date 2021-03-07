@@ -87,7 +87,7 @@ def validate(val_loader, model, params, criterion, epoch, batch_size, num_images
 
 def main():
     USE_MSE = False
-    EPOCHS = 20
+    EPOCHS = 200
 
     optimizer = SGDOptimizer(lr=0.1, weight_decay=1e-4)
 
@@ -115,7 +115,7 @@ def main():
     _, params = init_fn(key, (None, 784))
 
     # Generating dataset
-    x_train, y_train, x_test, y_test = datasets.get_dataset("fashion_mnist", 25600, 128)
+    x_train, y_train, x_test, y_test = datasets.get_dataset("fashion_mnist", 1024, 128)
 
     for e in range(EPOCHS):
         key, subkey = random.split(key)

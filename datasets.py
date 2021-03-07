@@ -32,7 +32,7 @@ def adding_perturbation_orginal_pixel(img, eta=0.5):
     # Apply a filter to high frequency part
     for i in range(row):
         for j in range(col):
-            if (row - i) ^ 2 + (row - j) ^ 2 > (row - 1) ^ 2:
+            if (row - i) ** 2 + (row - j) ** 2 > (row - 1) ** 2:
                 gauss[i][j] = 0
 
     for i in range(1, 5):
@@ -43,6 +43,7 @@ def adding_perturbation_orginal_pixel(img, eta=0.5):
     gauss = gauss.reshape(row, col, 1)
     Norm_Z = LA.norm(gauss)
     noisy = img + eta * (Norm_img) / Norm_Z * gauss
+
     return noisy
 
 
@@ -97,6 +98,13 @@ def get_dataset(
 
             idct_result = idct2(noise_add)
             train_images[i] = idct_result
+
+        for i in range(len(test_images)):
+            dct = dct2(test_images[i])
+            noise_add = adding_perturbation_orginal_pixel(dct)
+
+            idct_result = idct2(noise_add)
+            test_images[i] = idct_result
 
     if do_flatten_and_normalize:
         train_images = _partial_flatten_and_normalize(train_images)

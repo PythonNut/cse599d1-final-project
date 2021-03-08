@@ -26,11 +26,16 @@ apply_fn = jax.jit(apply_fn)
 kernel_fn = nt.batch(kernel_fn, 64)
 
 # Generating dataset
-x_train, y_train, x_test, y_test = datasets.get_dataset("fashion_mnist", 1024, 128)
+x_train, y_train, x_test, y_test = datasets.get_dataset("fashion_mnist", 2048, 128)
 
 # Perturbed datset
 x_train_p, y_train_p, x_test_p, y_test_p = datasets.get_dataset(
-    "fashion_mnist", 1024, 128, perturb=True
+    "fashion_mnist", 2048, 128, perturb=True
+)
+
+# Normal Noise datset
+x_train_n, y_train_n, x_test_n, y_test_n = datasets.get_dataset(
+    "fashion_mnist", 2048, 128, noise=True
 )
 
 # Constructing Kernels
@@ -97,6 +102,36 @@ print("=> Computing NTK for high-frq noise train and no noise test")
 now = time.time()
 g_dd_adv = kernel_fn(x_train_p, None, "ntk")
 g_td_adv = kernel_fn(x_test, x_train_p, "ntk")
+print(f"Took {time.time() - now:0.2f}s")
+
+predictor_adv = nt.predict.gradient_descent_mse(g_dd_adv, y_train_p - 0.1, diag_reg=1e-3)
+ntk_out_adv = predictor(None, None, -1, g_td_adv)
+
+print(accuracy(ntk_out_adv, y_test, topk=(1, 5)))
+
+
+print("=> Computing NTK for noise test, no noise train")
+
+g_td = kernel_fn(x_test_n, x_train, "ntk")
+ntk_out = predictor(None, None, -1, g_td)
+print(accuracy(ntk_out, y_test_n, topk=(1, 5)))
+
+
+print("=> Computing NTK for noise train and test")
+now = time.time()
+g_dd_adv = kernel_fn(x_train_n, None, "ntk")
+g_td_adv = kernel_fn(x_test_n, x_train_n, "ntk")
+print(f"Took {time.time() - now:0.2f}s")
+
+predictor_adv = nt.predict.gradient_descent_mse(g_dd_adv, y_train_p - 0.1, diag_reg=1e-3)
+ntk_out_adv = predictor(None, None, -1, g_td_adv)
+
+print(accuracy(ntk_out_adv, y_test_n, topk=(1, 5)))
+
+print("=> Computing NTK for noise train and no noise test")
+now = time.time()
+g_dd_adv = kernel_fn(x_train_n, None, "ntk")
+g_td_adv = kernel_fn(x_test, x_train_n, "ntk")
 print(f"Took {time.time() - now:0.2f}s")
 
 predictor_adv = nt.predict.gradient_descent_mse(g_dd_adv, y_train_p - 0.1, diag_reg=1e-3)

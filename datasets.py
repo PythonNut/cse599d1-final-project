@@ -10,6 +10,8 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from numpy import linalg as LA
 
+import skimage
+
 # implement 2D DCT
 def dct2(a):
     return dct(dct(a.T, norm="ortho").T, norm="ortho")
@@ -25,9 +27,8 @@ def adding_perturbation_orginal_pixel(img, eta=0.5):
     shape = row, col
     zeros = np.zeros(shape, dtype=np.int32)
     mean = 0
-    var = 1
-    sigma = var ** 0.5
-    gauss = np.random.normal(mean, sigma, (row, col))
+    var = 0.01
+    gauss = np.random.normal(mean, var, (row, col))
 
     # Apply a filter to high frequency part
     for i in range(row):
@@ -67,6 +68,7 @@ def get_dataset(
     data_dir=None,
     input_key="image",
     perturb=False,
+    noise=False
 ):
     """Download, parse and process a dataset to unit scale and one-hot labels."""
     ds_builder = tfds.builder(name)
@@ -105,6 +107,13 @@ def get_dataset(
 
             idct_result = idct2(noise_add)
             test_images[i] = idct_result
+
+    if noise:
+        for i in range(len(train_images)):
+            train_images[i] = skimage.util.random_noise(train_images[i], mode='gaussian')
+
+        for i in range(len(test_images)):
+            test_images[i] = skimage.util.random_noise(test_images[i], mode='gaussian')
 
     if do_flatten_and_normalize:
         train_images = _partial_flatten_and_normalize(train_images)

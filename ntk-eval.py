@@ -66,6 +66,39 @@ def model(x):
     K = kernel_fn(x, x_train, "ntk")
     return predictor(None, None, -1, K)
 
+def do_highfreq_transform(x):
+    def do_dct(row):
+        return datasets.jdct2(row.reshape(28, 28)).reshape(784)
+
+    # rescale so high-frequencies are easier to change
+    gauss_mask = jnp.array(datasets.get_gauss_mask((28, 28)))
+    large = 256 * 100
+    scale = 1/jnp.maximum(gauss_mask, 1/large).reshape(784)
+    scale = jnp.expand_dims(scale, axis=0)
+    return jnp.apply_along_axis(do_dct, 1, x) * scale
+
+def undo_highfreq_transform(x):
+    def undo_dct(row):
+        return datasets.jidct2(row.reshape(28, 28)).reshape(784)
+
+    gauss_mask = jnp.array(datasets.get_gauss_mask((28, 28)))
+    large = 256 * 100
+    scale = 1/jnp.maximum(gauss_mask, 1/large).reshape(784)
+    scale = jnp.expand_dims(scale, axis=0)
+    return jnp.apply_along_axis(undo_dct, 1, x/scale)
+
+def model_transformed(u):
+    x = undo_highfreq_transform(u)
+    K = kernel_fn(x, x_train, "ntk")
+    return predictor(None, None, -1, K)
+
+print("=> Running high frequency FGM attack against resulting NTK")
+now = time.time()
+advantage_ratio = 784/datasets.get_gauss_mask((28, 28)).sum()
+x_test_fgm = fast_gradient_method(model_transformed, do_highfreq_transform(x_test), 0.3*advantage_ratio, np.inf)
+y_test_fgm = model(x_test_fgm)
+print(f"Took {time.time() - now:0.2f}s")
+print(accuracy(y_test_fgm, y_test, topk=(1, 5)))
 
 print("=> Running FGM attack against resulting NTK")
 now = time.time()

@@ -4,13 +4,49 @@ import shutil
 import urllib.request
 from scipy.fftpack import dct, idct
 
+import jax
 from jax import random
+import jax.numpy as jnp
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from numpy import linalg as LA
 
 import skimage
+
+def jdct(x, norm=None):
+    assert len(x.shape) == 2
+    n, d = x.shape
+    u = jnp.zeros((n, 4*d))
+    u = jax.ops.index_update(u, jax.ops.index[:, 1:2*d:2], x)
+    u = jax.ops.index_update(u, jax.ops.index[:, 2*d+1::2], x[:, ::-1])
+    U = jnp.fft.rfft(u)[:, :d]
+
+    if norm == "ortho":
+        scale = jnp.ones(d) / jnp.sqrt(2*d)
+        scale = jax.ops.index_mul(scale, jax.ops.index[0], 1/jnp.sqrt(2))
+        return U.real * jnp.expand_dims(scale, axis=0)
+
+    return U.real
+
+def jidct(U, norm=None):
+    assert len(U.shape) == 2
+    n, d = U.shape
+
+    if norm == "ortho":
+        scale = jnp.ones(d) / jnp.sqrt(2*d)
+        scale = jax.ops.index_mul(scale, jax.ops.index[0], 1/jnp.sqrt(2))
+        U /= jnp.expand_dims(scale, axis=0)
+
+    U = jnp.hstack([U, jnp.zeros((n, 1)), -U[:, ::-1]])
+    u = jnp.fft.irfft(U)[:, 1:2*d:2]
+    return u
+
+def jdct2(a):
+    return jdct(jdct(a.T, norm="ortho").T, norm="ortho")
+
+def jidct2(a):
+    return jidct(jidct(a.T, norm="ortho").T, norm="ortho")
 
 # implement 2D DCT
 def dct2(a):

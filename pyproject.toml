@@ -15,6 +15,7 @@ tensorflow-datasets = "^4.2.0"
 neural-tangents = "^0.3.6"
 tf-nightly = "^2.5.0-alpha.20210303"
 python-dotenv = "^0.15.0"
+scikit-image = "^0.18.1"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

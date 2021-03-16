@@ -2,7 +2,6 @@ import gzip
 import os
 import shutil
 import urllib.request
-from scipy.fftpack import dct, idct
 
 import jax
 from jax import random
@@ -39,18 +38,6 @@ def adding_perturbation_orginal_pixel(img, eta=0.5):
     noisy = img + eta * (Norm_img) / Norm_Z * gauss
 
     return noisy
-
-def get_gauss_mask(shape, eta=0.5):
-    row, col = shape
-    gauss = np.ones((row, col))
-
-    # Apply a filter to high frequency part
-    for i in range(row):
-        for j in range(col):
-            if (row - i) ** 2 + (row - j) ** 2 > (row - 1) ** 2:
-                gauss[i][j] = 0
-
-    return gauss
 
 def _partial_flatten_and_normalize(x):
     """Flatten all but the first dimension of an `np.ndarray`."""

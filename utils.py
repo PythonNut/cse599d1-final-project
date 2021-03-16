@@ -51,6 +51,30 @@ def undo_highfreq_transform(x):
 def model_highfreq_transformed(model):
     return lambda u: model(undo_highfreq_transform(u))
 
+def do_lowfreq_transform(x):
+    def do_dct(row):
+        return jdct2(row.reshape(28, 28)).reshape(784)
+
+    # rescale so high-frequencies are easier to change
+    gauss_mask = jnp.array(get_gauss_mask((28, 28)))
+    large = 256 * 100
+    scale = 1/jnp.maximum(1 - gauss_mask, 1/large).reshape(784)
+    scale = jnp.expand_dims(scale, axis=0)
+    return jnp.apply_along_axis(do_dct, 1, x) * scale
+
+def undo_lowfreq_transform(x):
+    def undo_dct(row):
+        return jidct2(row.reshape(28, 28)).reshape(784)
+
+    gauss_mask = 1 - jnp.array(get_gauss_mask((28, 28)))
+    large = 256 * 100
+    scale = 1/jnp.maximum(gauss_mask, 1/large).reshape(784)
+    scale = jnp.expand_dims(scale, axis=0)
+    return jnp.apply_along_axis(undo_dct, 1, x/scale)
+
+def model_lowfreq_transformed(model):
+    return lambda u: model(undo_lowfreq_transform(u))
+
 def jdct(x, norm=None):
     assert len(x.shape) == 2
     n, d = x.shape

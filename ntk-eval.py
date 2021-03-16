@@ -73,6 +73,16 @@ with print_time():
     )
 print(accuracy(model(x_test_hf_fgm), y_test, topk=(1, 5)))
 
+print("=> Running low frequency FGM attack against resulting NTK")
+with print_time():
+    x_test_lf_fgm = fast_gradient_method(
+        model_lowfreq_transformed(model),
+        do_lowfreq_transform(x_test),
+        0.3,
+        np.inf,
+    )
+print(accuracy(model(x_test_lf_fgm), y_test, topk=(1, 5)))
+
 print("=> Running FGM attack against resulting NTK")
 with print_time():
     x_test_fgm = fast_gradient_method(model, x_test, 0.3, np.inf)
@@ -89,6 +99,18 @@ with print_time():
         np.inf,
     )
 print(accuracy(model(x_test_hf_pgd), y_test, topk=(1, 5)))
+
+print("=> Running low frequency PGD attack against resulting NTK")
+with print_time():
+    x_test_lf_pgd = projected_gradient_descent(
+        model_lowfreq_transformed(model),
+        do_lowfreq_transform(x_test),
+        0.3,
+        0.01,
+        40,
+        np.inf,
+    )
+print(accuracy(model(x_test_lf_pgd), y_test, topk=(1, 5)))
 
 print("=> Running PGD attack against resulting NTK")
 with print_time():
